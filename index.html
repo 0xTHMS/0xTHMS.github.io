@@ -1,0 +1,39 @@
+---
+layout: default
+title: Home
+---
+
+<div class="posts">
+  {% for post in paginator.posts %}
+  <div>
+    {% if post.lang != 'fr' %}
+      <span class="post-lang">{{ post.lang }}</span>
+    {% endif %}
+    <span class="post-title index-post-title">
+      <a href="{{ site.baseurl }}{{ post.url }}">
+        {{ post.title }}
+      </a>
+    </span>
+
+    <span class="post-date">{{ post.date | date_to_string }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="pagination">
+  {% if paginator.next_page %}
+    <a class="pagination-item older" href="{{ site.baseurl }}/page{{paginator.next_page}}">&lt; Plus anciens</a>
+  {% else %}
+    <span class="pagination-item older">&lt; Plus anciens</span>
+  {% endif %}
+  {% if paginator.previous_page %}
+    {% if paginator.page == 2 %}
+      <a class="pagination-item newer" href="{{ site.baseurl }}/">Plus récents &gt;</a>
+    {% else %}
+      <a class="pagination-item newer" href="{{ site.baseurl }}/page{{paginator.previous_page}}">Plus récents &gt;</a>
+    {% endif %}
+  {% else %}
+    <span class="pagination-item newer">Plus récents &gt;</span>
+  {% endif %}
+</div>
+
