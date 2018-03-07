@@ -1,3 +1,4 @@
 theme: jekyll-theme-hacker
 show_downloads: false
 permalink: /:year/:month/:title/
+title: testtitle1
