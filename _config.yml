@@ -1,5 +1,5 @@
 theme: jekyll-theme-hacker
 show_downloads: false
-permalink: /:year/:month/:title/
-title: [thms@www]
+permalink: pretty
+title: thms@www
 description: Welcome !
