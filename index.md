@@ -9,15 +9,10 @@ layout: page
 Blog!
 
 
-# Another
-Test
+# Articles
+- title: articles
+- url: articles.md
 
-{% highlight ruby %}
-def show
-  @widget = Widget(params[:id])
-  respond_to do |format|
-    format.html # show.html.erb
-    format.json { render json: @widget }
-  end
-end
-{% endhighlight %}
+# Articles 2
+- title: articles2
+- url: articles.html
