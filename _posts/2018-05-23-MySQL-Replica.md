@@ -1,0 +1,54 @@
+---
+layout: post
+title: Mysql Percona
+date: 2018-05-23 16:33:33
+author: thms
+tags: mysql percona master slave pt-table-checksum checksum 
+---
+
+# Qu'est-ce qu'un Bastion SSH ?
+En tant qu'administrateur système, rencontrer une bastion SSH est une chôse assez courante.
+
+Le bastion SSH est un hôte ayant une adresse IP publique afin d'être joignable sur internet mais aussi une adresse IP privée afin d'être relié à, par exemple, un réseau d'entreprise.
+
+Afin de se connecter à l'une des machines sur le réseau d'entreprise, on effectuera un *rebond* sur le bastion SSH.
+
+
+# Pourquoi ?
+- Manque d'adresses IPs publiques à allouer
+- Restreindre l'accès à certaines machines à une adresse IP source spécifique: celle du bastion
+- Infrastructure virtualisée ou les VMs ont des IPs privées et seul le loadbalancer possède une IP publique.
+
+# Astuces
+Lors de la connnexion à un hote derrière le bastion SSH,  on doit d'abord se connecter sur le bastion, puis se connecter sur l'hote final.
+
+{% highlight bash %}
+
+thms@home> ssh thms@bastion
+thms@bastion> ssh thms@10.0.0.1
+
+{% endhighlight %}
+
+Afin de gagner du temps, il est beaucoup plus pratique d'effectuer #2 directement.
+
+Pour se faire, on va éditer le fichier `.ssh/config`:
+
+{% highlight bash %}
+Host bastion
+ IdentityFile ~/.ssh/id_rsa
+ User thms
+
+Host 10.0.*.*
+ IdentityFile ~/.ssh/id_rsa
+ ProxyCommnd ssh thms@bastion -W %h:%p
+ User root
+{% endhighlight %}
+
+Le premier block permet de se connecter au bastion grace à la clé `id_rsa`, en tant qu'utilisateur `thms`
+
+Le second block permet de dire au client SSH "pour chaque IP qui *match* 10.0.*.*", on se connecte via `bastion`, avec la clé renseignée dans IdentityFile
+
+Ainsi, lorsque j'écris `ssh bastion`, mon client ssh se connecte en tant que thms à bastion avec ma clé.
+
+De même, lorsque j'écris `ssh 10.0.0.1`, mon client SSH se connecte à bastion et initie la connexion depuis bastion, en tant qu'utilisateur root, vers 10.0.0.1
+
