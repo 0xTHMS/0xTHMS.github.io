@@ -6,4 +6,4 @@ layout: page
 
 # Welcome
 
-* [Pour le moment, il n'y a que mes articles ](/articles/)
+* [Pour le moment, il n'y a que mes articles](/articles/)
