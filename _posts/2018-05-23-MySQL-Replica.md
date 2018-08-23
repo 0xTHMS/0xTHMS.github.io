@@ -41,7 +41,7 @@ Ensuite, insérer les hôtes à surveiller dans cette table. (INSERT INTO ..)
 # Utilisation
 
 Voici ce à quoi la table dsns peut ressembler une fois peuplée:
-{% highlight %}
+{% highlight sql %}
   mysql> select * from dsns;
 +----+-----------+----------------------------------------------------+
 | id | parent_id | dsn                                                |
