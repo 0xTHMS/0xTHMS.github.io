@@ -23,6 +23,7 @@ apt-get install percona-toolkit
 
 On créé une table qui contiendra la liste des slaves à vérifier.
 {% highlight sql %}
+CREATE DATABASE PERCONA;
 CREATE TABLE `dsns` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `parent_id` int(11) DEFAULT NULL,
@@ -30,3 +31,33 @@ CREATE TABLE `dsns` (
    PRIMARY KEY (`id`));
 {% endhighlight %}
 
+
+Ensuite, insérer les hôtes à surveiller dans cette table. (INSERT INTO ..)
+{% highlight sql %}
+   INSERT INTO dsns SET dsn = 'h=<IP_SLAVE>,u=<UTILISATEUR>,p=toto123'
+{% endhighlight %}
+
+
+# Utilisation
+
+Voici ce à quoi la table dsns peut ressembler une fois peuplée:
+{% highlight %}
+  mysql> select * from dsns;
++----+-----------+----------------------------------------------------+
+| id | parent_id | dsn                                                |
++----+-----------+----------------------------------------------------+
+|  1 |      NULL | h=xx.xxx.xxx.229,u=checksum,p=motdepassequitue!!!! |
+|  2 |      NULL | h=xx.xxx.xxx.230,u=checksum,p=motdepassequitue!!!! |
++----+-----------+----------------------------------------------------+
+{% endhighlight %}
+
+Ici, il s'agit d'un setup master/slave mysql 5.1
+
+Je peux ensuite lancer le check d'intégrité avec la commande suivante:
+{% highlight bash %}
+  pt-table-checksum --replicate=percona.checksums --ignore-databases mysql h=localhost,u=checksum,p=password --recursion-method dsn=D=percona,t=dsns
+{% endhighlight %}
+
+avec "h=localhost,u=checksum,p=password" j'indique les informations de connexion au serveur ou on trouve la table `dsns`
+
+L'outil va ensuite se connecter aux master et au slave, et commencer le check d'intégrité et la comparaison de toutes les bases, sauf celle nommée mysql (puisque je choisi de l'ignorer)
