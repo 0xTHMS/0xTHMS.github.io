@@ -1,0 +1,48 @@
+<h1 id="introduction">Introduction</h1>
+<p>J’ai récemment dû mettre en place une réplication MySQL 5.1 master/slave pour le compte d’un client afin de mener à bien une migration.
+Lors de la préparation de la migration, je voulais trouver un moyen de m’assurer que ma replication était correct et que le serveur de destination était intègre.</p>
+
+<p>A ma connaissance, mysql n’intègre pas d’outil permettant de vérifier ceci, mais c’est le cas de Percona, qui contient un outil nommé <code class="highlighter-rouge">pt-table-checksum</code> dans son paquet <code class="highlighter-rouge">perconna-toolkit</code> et qui reste complètement compatible avec MySQL, même en version 5.1</p>
+
+<p>Par ailleurs, les outils percona sont très pratiques, il est possible d’effectuer des check locaux, mais aussi d’aller interroger d’autres serveurs qui n’ont pas forcément la suite percona d’installée.</p>
+
+<p>Cet article consitue donc un mémo sur le sujet.</p>
+
+<h1 id="installation--configuration">Installation &amp; configuration</h1>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">apt-get install percona-toolkit</code></pre></figure>
+
+<p>On créé une table qui contiendra la liste des slaves à vérifier.</p>
+
+<figure class="highlight"><pre><code class="language-sql" data-lang="sql"><span class="k">CREATE</span> <span class="k">DATABASE</span> <span class="n">PERCONA</span><span class="p">;</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">`dsns`</span> <span class="p">(</span>
+  <span class="nv">`id`</span> <span class="n">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span>
+  <span class="nv">`parent_id`</span> <span class="n">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="nv">`dsn`</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+   <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="nv">`id`</span><span class="p">));</span></code></pre></figure>
+
+<p>Ensuite, insérer les hôtes à surveiller dans cette table. (INSERT INTO ..)</p>
+
+<figure class="highlight"><pre><code class="language-sql" data-lang="sql">   <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">dsns</span> <span class="k">SET</span> <span class="n">dsn</span> <span class="o">=</span> <span class="s1">'h=&lt;IP_SLAVE&gt;,u=&lt;UTILISATEUR&gt;,p=toto123'</span></code></pre></figure>
+
+<h1 id="utilisation">Utilisation</h1>
+
+<p>Voici ce à quoi la table dsns peut ressembler une fois peuplée:</p>
+
+<figure class="highlight"><pre><code class="language-sql" data-lang="sql">  <span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">dsns</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-----------+----------------------------------------------------+</span>
+<span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">parent_id</span> <span class="o">|</span> <span class="n">dsn</span>                                                <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-----------+----------------------------------------------------+</span>
+<span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span>      <span class="k">NULL</span> <span class="o">|</span> <span class="n">h</span><span class="o">=</span><span class="n">xx</span><span class="p">.</span><span class="n">xxx</span><span class="p">.</span><span class="n">xxx</span><span class="p">.</span><span class="mi">229</span><span class="p">,</span><span class="n">u</span><span class="o">=</span><span class="n">checksum</span><span class="p">,</span><span class="n">p</span><span class="o">=</span><span class="n">motdepassequitue</span><span class="o">!!!!</span> <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">2</span> <span class="o">|</span>      <span class="k">NULL</span> <span class="o">|</span> <span class="n">h</span><span class="o">=</span><span class="n">xx</span><span class="p">.</span><span class="n">xxx</span><span class="p">.</span><span class="n">xxx</span><span class="p">.</span><span class="mi">230</span><span class="p">,</span><span class="n">u</span><span class="o">=</span><span class="n">checksum</span><span class="p">,</span><span class="n">p</span><span class="o">=</span><span class="n">motdepassequitue</span><span class="o">!!!!</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-----------+----------------------------------------------------+</span></code></pre></figure>
+
+<p>Ici, il s’agit d’un setup master/slave mysql 5.1</p>
+
+<p>Je peux ensuite lancer le check d’intégrité avec la commande suivante:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">  pt-table-checksum <span class="nt">--replicate</span><span class="o">=</span>percona.checksums <span class="nt">--ignore-databases</span> mysql <span class="nv">h</span><span class="o">=</span>localhost,u<span class="o">=</span>checksum,p<span class="o">=</span>password <span class="nt">--recursion-method</span> <span class="nv">dsn</span><span class="o">=</span><span class="nv">D</span><span class="o">=</span>percona,t<span class="o">=</span>dsns</code></pre></figure>
+
+<p>avec “h=localhost,u=checksum,p=password” j’indique les informations de connexion au serveur ou on trouve la table <code class="highlighter-rouge">dsns</code></p>
+
+<p>L’outil va ensuite se connecter aux master et au slave, et commencer le check d’intégrité et la comparaison de toutes les bases, sauf celle nommée mysql (puisque je choisi de l’ignorer)</p>
