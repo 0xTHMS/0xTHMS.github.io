@@ -8,6 +8,8 @@ tags: bash rbash rsh sh shell escapes vim tar zip
 
 # Restricted shells
 
+( Toujours pas fini cet article ... )
+
 Je suis récemment tombé sur un challenge qui nécessitait de sortir d'un shell restreint.
 
 Celui-ci m'a permis de (re)découvrir de nombreuses façon de s'échapper d'un tel shell. 
